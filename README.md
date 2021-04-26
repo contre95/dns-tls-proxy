@@ -18,31 +18,25 @@ PROXY_CONFIG_TCP_MAX_CONN_POOL=15 # Max TCP pool connections allowed
 PROXY_CONFIG_CACHE_TTL=45 # The time the cache will hold a response in seconds. (Note: Cache is not implemented)
 PROXY_RESOLVER_READ_TO=500 # Read timeout of the DoT resolver TLS connection in miliseconds.
 ```
-## Build and Run on Host 💻
-### Build :computer:
+## 💻 Build and Run on Host 
+
 ```sh
 go build -o dns-proxy
-```
-### Run :computer:
-```sh
 source <(cat .env | awk '{print "export "$1}')
 ./dns-proxy
 ```
-or simple run 
+or simply run 
 ```sh
 go run main.go config.go # no need to build 
 ```
-## Build and Run with Docker🐋
-### Build :whale:
+
+## 🐋 Build and Run with Docker
 ```sh
 docker image build -t dns-tls-proxy .
-```
-### Run :whale:
-```sh
 docker container run --rm --env-file .env -p 4545:4545/tcp -p 4545:4545/udp proxy-dns
 ```
 
-# Usage
+## Usage
 ```sh
 dig lucascontre.site  @127.0.0.1 -p 4545 # UDP
 dig lucascontre.site  @127.0.0.1 -p 4545 +tcp # TCP
