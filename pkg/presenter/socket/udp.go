@@ -23,7 +23,7 @@ func StarUDPtServer(proxy proxy.Service, port int, host string) {
 
 func udpHandler(conn *net.UDPConn, p proxy.Service) {
 	for {
-		unsolvedMsg := make([]byte, 512)
+		unsolvedMsg := make([]byte, 2048)
 		n, addr, err := conn.ReadFromUDP(unsolvedMsg)
 		if err != nil {
 			log.Println("Failed to read from connection.")
@@ -34,7 +34,7 @@ func udpHandler(conn *net.UDPConn, p proxy.Service) {
 			fmt.Printf("Error solving message: %v \n", proxyErr)
 		}
 
-		_, err = conn.WriteToUDP(solvedMsg[2:n], addr)
+		_, err = conn.WriteToUDP(solvedMsg[2:], addr)
 		if err != nil {
 			fmt.Println(err)
 		}

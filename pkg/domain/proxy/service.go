@@ -67,6 +67,11 @@ func (s *service) Solve(um UnsolvedMsg, msgFormat string) (SolvedMsg, error) {
 	// If cache could resolve the query, then try with the resolver
 	if cm == nil {
 		sm, resolutionErr := s.resolver.Solve(um)
+
+		var dnsm2 *dnsmessage.Message
+		dnsm2, _ = s.mparser.ParseTCPMsg(sm)
+		fmt.Println(dnsm2.Header)
+
 		if resolutionErr != nil {
 			fmt.Printf("Resolution Error: %v \n", resolutionErr)
 			return nil, resolutionErr
