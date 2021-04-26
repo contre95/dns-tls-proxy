@@ -12,10 +12,10 @@ import (
 
 func StartTCPServer(proxy proxy.Service, port int, host string, direct bool, maxPoolConnection int) {
 	portStr := strconv.Itoa(port)
-	fmt.Println("Starting TCP DNS Proxy on PORT " + portStr)
+	fmt.Println("Listening TCP DNS Proxy on PORT " + portStr)
 	ln, err := net.Listen("tcp", host+":"+portStr)
 	if err != nil {
-		log.Println("error creating listener")
+		log.Println("Error creating listener")
 		panic(err)
 	}
 	var conns uint64
@@ -24,9 +24,8 @@ func StartTCPServer(proxy proxy.Service, port int, host string, direct bool, max
 			// Holds inil a new connection is set
 			conn, err := ln.Accept()
 			atomic.AddUint64(&conns, 1)
-			log.Printf(" Connections: %d ", conns)
 			if err != nil {
-				log.Println("error creating connection")
+				log.Println("Error creating connection")
 				panic(err)
 			}
 			go tcpHandler(&conn, proxy, &conns, direct)
@@ -37,14 +36,12 @@ func StartTCPServer(proxy proxy.Service, port int, host string, direct bool, max
 func tcpHandler(conn *net.Conn, p proxy.Service, conns *uint64, direct bool) error {
 	defer (*conn).Close()
 	if direct {
-		fmt.Println("Using Direct Proxy Method")
 		err := p.Direct(conn)
 		if err != nil {
 			log.Println(err)
 			return err
 		}
 	} else {
-		fmt.Println("Using Normal Proxy Method")
 		var unsolvedMsg [2024]byte
 		n, err := (*conn).Read(unsolvedMsg[:])
 		if err != nil {
@@ -58,6 +55,5 @@ func tcpHandler(conn *net.Conn, p proxy.Service, conns *uint64, direct bool) err
 		(*conn).Write(solvedMsg)
 	}
 	atomic.AddUint64(conns, ^uint64(0))
-	log.Println("Closing connection")
 	return nil
 }

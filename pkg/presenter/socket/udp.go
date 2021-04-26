@@ -12,7 +12,7 @@ import (
 
 func StarUDPtServer(proxy proxy.Service, port int, host string) {
 	portStr := strconv.Itoa(port)
-	fmt.Println("Starting UDP DNS Proxy on PORT " + portStr)
+	fmt.Println("Listening UDP DNS Proxy on PORT " + portStr)
 	conn, err := net.ListenUDP("udp", &net.UDPAddr{Port: port})
 	if err != nil {
 		log.Fatal(err)

@@ -63,8 +63,8 @@ CzqJx1+NLyc8nAK8Ib2HxnC+IrrWzfRLvVNve8KaN9EtBH7TuMwNW4SpDCmGr6fY
 `
 
 func main() {
-	fmt.Println("Starting DNS Proxy on 4545")
-	ln, err := net.Listen("tcp", "localhost:4545")
+	fmt.Println("Starting DNS Proxy on 53")
+	ln, err := net.Listen("tcp", "localhost:53")
 	if err != nil {
 		fmt.Println("error creating listener")
 		panic(err)
