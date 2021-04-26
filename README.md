@@ -27,6 +27,7 @@ source <(cat .env | awk '{print "export "$1}')
 ```
 or simply run 
 ```sh
+source <(cat .env | awk '{print "export "$1}')
 go run main.go config.go # no need to build 
 ```
 
