@@ -53,10 +53,15 @@ func (s *service) Solve(um UnsolvedMsg, msgFormat string) (SolvedMsg, error) {
 		return nil, parseErr
 	}
 
+	// Log
+	for _, q := range dnsm.Questions {
+		log.Printf("DNS  [\033[1;36m%s\033[0m] -> : \033[1;34m%s\033[0m", msgFormat, q.Name.String())
+	}
+
 	// Check if the response is cached
 	cm, cacheErr := s.cache.Get(dnsm)
 	if cacheErr != nil {
-		log.Printf("Cache error: %v", cacheErr)
+		log.Printf("\033[1;33mCache error:\033[0m : %v", cacheErr)
 	}
 
 	// If cache could resolve the query, then try with the resolver
@@ -68,7 +73,7 @@ func (s *service) Solve(um UnsolvedMsg, msgFormat string) (SolvedMsg, error) {
 		}
 		cacheErr := s.cache.Store(dnsm, sm)
 		if cacheErr != nil {
-			log.Printf("Error: Could not cache message: %v.", cacheErr)
+			log.Printf("\033[1;33mCache error:\033[0m : %v", cacheErr)
 		}
 		return sm, nil
 	}
