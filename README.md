@@ -39,7 +39,7 @@ docker image build -t dns-tls-proxy .
 ```
 ### Run :whale:
 ```sh
-docker container run --rm --env-file .env -p 4545:4545/tcp -p 4545:4545 proxy-dns
+docker container run --rm --env-file .env -p 4545:4545/tcp -p 4545:4545/udp proxy-dns
 ```
 
 # Resources 
