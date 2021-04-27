@@ -34,7 +34,7 @@ func udpHandler(conn *net.UDPConn, p proxy.Service) {
 			fmt.Printf("Error solving message: %v \n", proxyErr)
 		}
 
-		_, err = conn.WriteToUDP(solvedMsg[2:], addr)
+		_, err = conn.WriteToUDP(solvedMsg[:], addr)
 		if err != nil {
 			fmt.Println(err)
 		}

@@ -15,18 +15,12 @@ type Resolver interface {
 	GetTLSConnection() (*tls.Conn, error)
 }
 type Cache interface {
-	Get(dnsm *dnsmessage.Message) (SolvedMsg, error)
-	Store(dnsm *dnsmessage.Message, sm SolvedMsg) error
+	Get(dnsm dnsmessage.Message) (*dnsmessage.Message, error)
+	Store(dnsm dnsmessage.Message) error
+	AutoPurge()
 }
 type MsgParser interface {
-	ParseUPDMsg(m Msg) (*dnsmessage.Message, UnsolvedMsg, error)
+	ParseUDPMsg(m Msg) (*dnsmessage.Message, error)
 	ParseTCPMsg(m Msg) (*dnsmessage.Message, error)
+	PackMsg(dnsm *dnsmessage.Message, msgFormat string) (Msg, error)
 }
-
-const (
-	InfoColor    = "\033[1;34m%s\033[0m"
-	NoticeColor  = "\033[1;36m%s\033[0m"
-	WarningColor = "\033[1;33m%s\033[0m"
-	ErrorColor   = "\033[1;31m%s\033[0m"
-	DebugColor   = "\033[0;36m%s\033[0m"
-)

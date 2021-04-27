@@ -11,7 +11,8 @@ import (
 
 func main() {
 	config := GetConfig()
-	cache := cache.NewMemoryCache(time.Now().Add(time.Duration(config.CACHE_TLL) * time.Second))
+	cache := cache.NewMemoryCache(time.Duration(config.CACHE_TLL) * time.Second)
+	go cache.AutoPurge()
 	resolver := resolver.NewCloudFlareResolver("1.1.1.1", 853, config.RESOLVER_READ_TO)
 	parser := helpers.NewMsgParser()
 

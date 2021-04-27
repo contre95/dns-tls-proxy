@@ -42,7 +42,8 @@ func (s *service) Solve(um UnsolvedMsg, msgFormat string) (SolvedMsg, error) {
 	var parseErr error
 	var dnsm *dnsmessage.Message
 	if msgFormat == "udp" {
-		dnsm, um, parseErr = s.mparser.ParseUPDMsg(um)
+		dnsm, parseErr = s.mparser.ParseUDPMsg(um)
+		um, parseErr = s.mparser.PackMsg(dnsm, "tcp") // Parse UDP message in order to send it to DoT Resolver (TCP)
 	} else if msgFormat == "tcp" {
 		dnsm, parseErr = s.mparser.ParseTCPMsg(um)
 	} else {
@@ -52,30 +53,36 @@ func (s *service) Solve(um UnsolvedMsg, msgFormat string) (SolvedMsg, error) {
 		log.Printf("Error parsing UnsolvedMsg: %v \n", parseErr)
 		return nil, parseErr
 	}
-
-	// Log
 	for _, q := range dnsm.Questions {
 		log.Printf("DNS  [\033[1;36m%s\033[0m] -> : \033[1;34m%s\033[0m", msgFormat, q.Name.String())
 	}
 
 	// Check if the response is cached
-	cm, cacheErr := s.cache.Get(dnsm)
+	cm, cacheErr := s.cache.Get(*dnsm)
 	if cacheErr != nil {
 		log.Printf("\033[1;33mCache error:\033[0m : %v", cacheErr)
 	}
-
-	// If cache could resolve the query, then try with the resolver
-	if cm == nil {
-		sm, resolutionErr := s.resolver.Solve(um)
-		if resolutionErr != nil {
-			fmt.Printf("Resolution Error: %v \n", resolutionErr)
-			return nil, resolutionErr
-		}
-		cacheErr := s.cache.Store(dnsm, sm)
-		if cacheErr != nil {
-			log.Printf("\033[1;33mCache error:\033[0m : %v", cacheErr)
+	if cm != nil {
+		cm.Header.ID = dnsm.Header.ID
+		sm, parseErr := s.mparser.PackMsg(cm, msgFormat)
+		if parseErr != nil {
+			return nil, errors.New("Wrong value stored in cache")
 		}
 		return sm, nil
 	}
-	return cm, nil
+
+	sm, resolutionErr := s.resolver.Solve(um)
+	if resolutionErr != nil {
+		fmt.Printf("Resolution Error: %v \n", resolutionErr)
+		return nil, resolutionErr
+	}
+	var storeErr error
+	var solvedDNSM *dnsmessage.Message
+	solvedDNSM, storeErr = s.mparser.ParseTCPMsg(sm) // Resolver response is always TCP
+	storeErr = s.cache.Store(*solvedDNSM)
+	if storeErr != nil {
+		log.Printf("\033[1;33mCache error:\033[0m : %v", cacheErr)
+	}
+	sm, _ = s.mparser.PackMsg(solvedDNSM, msgFormat)
+	return sm, nil
 }
