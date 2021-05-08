@@ -3,7 +3,6 @@ package cache
 import (
 	"crypto/sha256"
 	"fmt"
-	"log"
 	"sync"
 	"time"
 	"tls-dns-proxy/pkg/domain/proxy"
@@ -11,18 +10,16 @@ import (
 	"golang.org/x/net/dns/dnsmessage"
 )
 
-func main() {
-	fmt.Println("vim-go")
-}
-
 type cacheValue struct {
 	msg        *dnsmessage.Message
 	expiration time.Time
 }
+
 type memCache struct {
 	ttl     time.Duration
 	mx      sync.RWMutex
 	entries map[string]cacheValue
+	logger  proxy.Logger
 }
 
 func (mc *memCache) AutoPurge() {
@@ -30,17 +27,18 @@ func (mc *memCache) AutoPurge() {
 		for key, cValue := range mc.entries {
 			if cValue.expiration.Before(now) {
 				mc.mx.Lock()
-				log.Printf("Clearing entry: %v \n", key)
+				mc.logger.Info("Clearing entry: %v \n", key)
 				delete(mc.entries, key)
 				mc.mx.Unlock()
 			}
 		}
 	}
 }
-func NewMemoryCache(ttl time.Duration) proxy.Cache {
+func NewMemoryCache(ttl time.Duration, logger proxy.Logger) proxy.Cache {
 	c := memCache{
 		ttl:     ttl,
 		entries: map[string]cacheValue{},
+		logger:  logger,
 	}
 	return &c
 }

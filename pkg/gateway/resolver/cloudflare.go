@@ -59,7 +59,6 @@ func (cfl *cloudFlare) GetTLSConnection() (*tls.Conn, error) {
 		RootCAs: roots,
 	})
 	if err != nil {
-		log.Println("Error connecting to CloudFlare")
 		return nil, err
 	}
 	_ = dnsCloudFlareConn.SetReadDeadline(time.Now().Add(time.Duration(cfl.readTimeOut) * time.Millisecond))
@@ -81,8 +80,6 @@ func (cfl *cloudFlare) Solve(um proxy.UnsolvedMsg) (proxy.SolvedMsg, error) {
 	n, er := conn.Read(reply[:])
 	if er != nil {
 		fmt.Printf("Could read response from CloudFlare: %v \n", er)
-	} else {
-		log.Println("Succesfuly fullfiled the request")
 	}
 	return reply[:n], nil
 }

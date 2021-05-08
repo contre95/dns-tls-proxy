@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net"
 
 	"golang.org/x/net/dns/dnsmessage"
@@ -19,16 +18,17 @@ type service struct {
 	resolver Resolver
 	mparser  MsgParser
 	cache    Cache
+	logger   Logger
 }
 
-func NewDNSProxy(r Resolver, mp MsgParser, c Cache) Service {
-	return &service{r, mp, c}
+func NewDNSProxy(r Resolver, mp MsgParser, c Cache, l Logger) Service {
+	return &service{r, mp, c, l}
 }
 
 func (s *service) Direct(conn *net.Conn) error {
 	resolverConn, err := s.resolver.GetTLSConnection()
 	if err != nil {
-		log.Println("Could not get TLS Resolver connection")
+		s.logger.Err("Could not get TLS Resolver connection: %v", err)
 		return err
 	}
 	defer resolverConn.Close()
@@ -50,19 +50,20 @@ func (s *service) Solve(um UnsolvedMsg, msgFormat string) (SolvedMsg, error) {
 		return nil, errors.New(fmt.Sprintf("Invalid msg format: %s \n", msgFormat))
 	}
 	if parseErr != nil {
-		log.Printf("Error parsing UnsolvedMsg: %v \n", parseErr)
+		s.logger.Err("Error parsing UnsolvedMsg: %v \n", parseErr)
 		return nil, parseErr
 	}
 	for _, q := range dnsm.Questions {
-		log.Printf("DNS  [\033[1;36m%s\033[0m] -> : \033[1;34m%s\033[0m", msgFormat, q.Name.String())
+		s.logger.Info("DNS %s: %s ", msgFormat, q.Name.String())
 	}
 
 	// Check if the response is cached
 	cm, cacheErr := s.cache.Get(*dnsm)
 	if cacheErr != nil {
-		log.Printf("\033[1;33mCache error:\033[0m : %v", cacheErr)
+		s.logger.Err("Cache error: %v", cacheErr)
 	}
 	if cm != nil {
+		s.logger.Debug("Message found in cache")
 		cm.Header.ID = dnsm.Header.ID
 		sm, parseErr := s.mparser.PackMsg(cm, msgFormat)
 		if parseErr != nil {
@@ -73,7 +74,7 @@ func (s *service) Solve(um UnsolvedMsg, msgFormat string) (SolvedMsg, error) {
 
 	sm, resolutionErr := s.resolver.Solve(um)
 	if resolutionErr != nil {
-		fmt.Printf("Resolution Error: %v \n", resolutionErr)
+		s.logger.Err("Resolution Error: %v \n", resolutionErr)
 		return nil, resolutionErr
 	}
 	var storeErr error
@@ -81,7 +82,7 @@ func (s *service) Solve(um UnsolvedMsg, msgFormat string) (SolvedMsg, error) {
 	solvedDNSM, storeErr = s.mparser.ParseTCPMsg(sm) // Resolver response is always TCP
 	storeErr = s.cache.Store(*solvedDNSM)
 	if storeErr != nil {
-		log.Printf("\033[1;33mCache error:\033[0m : %v", cacheErr)
+		s.logger.Err("Cache error: %v", cacheErr)
 	}
 	sm, _ = s.mparser.PackMsg(solvedDNSM, msgFormat)
 	return sm, nil
